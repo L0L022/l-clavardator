@@ -1,3 +1,5 @@
+package server;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -6,13 +8,16 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.HashSet;
+import java.util.Set;
 
-class Server {
+public class Server {
 	final int port = 1234;
 	ServerSocketChannel ssc;
 	Selector selector;
+	Set<Client> clients;
 
-	Server() throws IOException {
+	public Server() throws IOException {
 		ssc = ServerSocketChannel.open();
 		ssc.configureBlocking(false);
 		ssc.setOption(StandardSocketOptions.SO_REUSEADDR, true);
@@ -20,6 +25,8 @@ class Server {
 
 		selector = Selector.open();
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
+
+		clients = new HashSet<Client>();
 	}
 
 	public void demarrer() throws IOException {
@@ -33,7 +40,9 @@ class Server {
 				if (sk.isAcceptable()) {
 					SocketChannel sc = ssc.accept();
 					sc.configureBlocking(false);
-					sc.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, new Client(sc));
+
+					Client c = new Client(sc, selector, clients);
+					clients.add(c);
 				}
 
 				if (sk.isReadable() || sk.isWritable()) {

@@ -1,10 +1,12 @@
+package protocol.commands;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class InvalidCommand extends Command {
+public class Invalid extends Command {
 	String command;
 
-	InvalidCommand(String command) {
+	Invalid(String command) {
 		this.command = command;
 	}
 
@@ -13,11 +15,11 @@ public class InvalidCommand extends Command {
 		return command + "\n";
 	}
 
-	static Command fromString(String str) {
+	public static Command fromString(String str) {
 		Pattern p = Pattern.compile("^(.*)\n$");
 		Matcher m = p.matcher(str);
 		while (m.find()) {
-			return new InvalidCommand(m.group(1));
+			return new Invalid(m.group(1));
 		}
 
 		return null;

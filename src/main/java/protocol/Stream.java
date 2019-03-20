@@ -1,42 +1,71 @@
+package protocol;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayDeque;
 import java.util.Queue;
+
+import protocol.commands.Command;
 
 public class Stream {
 	SocketChannel sc;
 	String readLine;
 	ByteBuffer readBuffer;
 	ByteBuffer writeBuffer;
-	Queue<Command> receivedCommands;
-	Queue<Command> commandsToSend;
+	public Queue<Command> receivedCommands;
+	public Queue<Command> commandsToSend;
+	Selector selector;
+	SelectionKey writeKey;
+	Object keyAttachement;
+	boolean keyiswrite;
 
-	Stream(SocketChannel sc) {
+	public Stream(SocketChannel sc, Selector selector, Object keyAttachement) throws IOException {
 		this.sc = sc;
 		readLine = "";
 		readBuffer = ByteBuffer.allocate(128);
 		receivedCommands = new ArrayDeque<Command>();
 		commandsToSend = new ArrayDeque<Command>();
+		this.selector = selector;
+		this.keyAttachement = keyAttachement;
+
+		writeKey = this.sc.register(this.selector, SelectionKey.OP_READ, this.keyAttachement);
+
+		keyiswrite = false;
 	}
 
-	void send(Command c) {
+	public void send(Command c) throws IOException {
 		commandsToSend.add(c);
+
+		if (!keyiswrite) {
+			keyiswrite = true;
+			writeKey = sc.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, keyAttachement);
+		}
 	}
 
-	void work(int ops) throws IOException {
+	public void work(int ops) throws IOException {
+
 		if ((ops & SelectionKey.OP_READ) != 0) {
+			System.out.println("READ");
 			read();
 		}
 
 		if ((ops & SelectionKey.OP_WRITE) != 0) {
+			System.out.println("WRITE");
 			write();
 		}
 	}
 
-	void read() throws IOException {
-		sc.read(readBuffer);
+	private void read() throws IOException {
+		int byte_read = sc.read(readBuffer);
+
+		if (byte_read == -1) {
+			// fin de connexion
+		}
+
+		System.out.println(byte_read);
 		readBuffer.flip();
 
 		// System.out.println(d.buffer);
@@ -44,7 +73,6 @@ public class Stream {
 			char c = (char) readBuffer.get();
 			readLine += c;
 			// System.out.println("get: "+c);
-
 			Command command = Command.fromString(readLine);
 			if (command != null) {
 				readLine = "";
@@ -56,7 +84,7 @@ public class Stream {
 		readBuffer.clear();
 	}
 
-	void write() throws IOException {
+	private void write() throws IOException {
 		if (writeBuffer != null) {
 			sc.write(writeBuffer);
 
@@ -68,6 +96,13 @@ public class Stream {
 		if (writeBuffer == null && !commandsToSend.isEmpty()) {
 			Command c = commandsToSend.poll();
 			writeBuffer = ByteBuffer.wrap(c.toString().getBytes()); // utiliser le buff prec
+		} else {
+//			if (writeKey.isValid()) {
+//				writeKey.cancel();
+//			}
+			writeKey = sc.register(selector, SelectionKey.OP_READ, keyAttachement);
+			keyiswrite = false;
+			// System.out.println("plus écrire");
 		}
 	}
 }

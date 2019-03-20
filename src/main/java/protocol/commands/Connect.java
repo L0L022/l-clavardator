@@ -1,10 +1,12 @@
+package protocol.commands;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ConnectCommand extends Command {
-	String pseudo;
+public class Connect extends Command {
+	public String pseudo;
 
-	ConnectCommand(String pseudo) {
+	Connect(String pseudo) {
 		this.pseudo = pseudo;
 	}
 
@@ -13,11 +15,11 @@ public class ConnectCommand extends Command {
 		return "CONNECT " + pseudo + "\n";
 	}
 
-	static Command fromString(String str) {
+	public static Command fromString(String str) {
 		Pattern p = Pattern.compile("^CONNECT (.*)\n$");
 		Matcher m = p.matcher(str);
 		while (m.find()) {
-			return new ConnectCommand(m.group(1));
+			return new Connect(m.group(1));
 
 		}
 

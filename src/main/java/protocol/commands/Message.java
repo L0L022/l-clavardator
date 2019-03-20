@@ -1,11 +1,13 @@
+package protocol.commands;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MessageCommand extends Command {
+public class Message extends Command {
 
 	String message;
 
-	MessageCommand(String message) {
+	Message(String message) {
 		this.message = message;
 	}
 
@@ -14,11 +16,11 @@ public class MessageCommand extends Command {
 		return "MSG " + message + "\n";
 	}
 
-	static Command fromString(String str) {
+	public static Command fromString(String str) {
 		Pattern p = Pattern.compile("^MSG (.*)\n$");
 		Matcher m = p.matcher(str);
 		while (m.find()) {
-			return new MessageCommand(m.group(1));
+			return new Message(m.group(1));
 		}
 
 		return null;
