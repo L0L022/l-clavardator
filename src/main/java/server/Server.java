@@ -15,7 +15,7 @@ public class Server {
 	final int port = 1234;
 	ServerSocketChannel ssc;
 	Selector selector;
-	Set<Client> clients;
+	public Set<Client> clients;
 
 	public Server() throws IOException {
 		ssc = ServerSocketChannel.open();
@@ -41,7 +41,7 @@ public class Server {
 					SocketChannel sc = ssc.accept();
 					sc.configureBlocking(false);
 
-					Client c = new Client(sc, selector, clients);
+					Client c = new Client(sc, selector, this);
 					clients.add(c);
 				}
 

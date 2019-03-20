@@ -1,19 +1,20 @@
 package server.states;
 
-import java.util.Set;
+import java.io.IOException;
 
 import protocol.commands.Command;
 import protocol.commands.Connect;
 import server.Client;
 
-public class WaitConnect implements ClientState {
+public class WaitConnect extends ClientState {
 
-	public ClientState process(Client self, Set<Client> clients, Command c) {
+	@Override
+	public ClientState process(Client self, Command c) throws IOException {
 		if (c instanceof Connect) {
 			return new Connected(((Connect) c).pseudo);
 		}
 
-		return null;
+		return new Error(self);
 	}
 
 }

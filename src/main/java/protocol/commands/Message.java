@@ -5,9 +5,9 @@ import java.util.regex.Pattern;
 
 public class Message extends Command {
 
-	String message;
+	public String message;
 
-	Message(String message) {
+	public Message(String message) {
 		this.message = message;
 	}
 

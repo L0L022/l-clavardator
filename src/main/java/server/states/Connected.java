@@ -1,13 +1,13 @@
 package server.states;
 
 import java.io.IOException;
-import java.util.Set;
 
 import protocol.commands.Command;
+import protocol.commands.EndOfStream;
 import protocol.commands.Message;
 import server.Client;
 
-public class Connected implements ClientState {
+public class Connected extends ClientState {
 
 	String pseudo;
 
@@ -15,20 +15,24 @@ public class Connected implements ClientState {
 		this.pseudo = pseudo;
 	}
 
-	public ClientState process(Client self, Set<Client> clients, Command c) throws IOException {
+	@Override
+	public ClientState process(Client self, Command c) throws IOException {
 		if (c instanceof Message) {
 
-			for (Client client : clients) {
-				// if (client != self) {
-				client.s.send(c);
-//					System.out.println("sent: " + c);
-//				}
+			for (Client client : self.server.clients) {
+				if (client != self) {
+					client.s.send(new Message(pseudo + "> " + ((Message) c).message));
+				}
 			}
 
 			return this;
 		}
 
-		return null;
+		if (c instanceof EndOfStream) {
+			return new Disconnect(self);
+		}
+
+		return new Error(self);
 	}
 
 }
