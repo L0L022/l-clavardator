@@ -15,6 +15,12 @@ public class MyTextBox extends TextBox {
 
 	@Override
 	public Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
+		if (keyStroke.getKeyType() == KeyType.EOF || (keyStroke.isCtrlDown()
+				&& (keyStroke.getCharacter().charValue() == 'd' || keyStroke.getCharacter().charValue() == 'c'))) {
+			messages.addLine("FIN");
+			return Result.HANDLED;
+		}
+
 		if (keyStroke.getKeyType() == KeyType.Enter) {
 			if (messages.getText().isEmpty()) {
 				messages.setText(getText());

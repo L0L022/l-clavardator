@@ -1,20 +1,19 @@
 package client.ui;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.gui2.BasicWindow;
-import com.googlecode.lanterna.gui2.Button;
 import com.googlecode.lanterna.gui2.DefaultWindowManager;
 import com.googlecode.lanterna.gui2.EmptySpace;
 import com.googlecode.lanterna.gui2.GridLayout;
-import com.googlecode.lanterna.gui2.Label;
+import com.googlecode.lanterna.gui2.GridLayout.Alignment;
 import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
+import com.googlecode.lanterna.gui2.Window;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
@@ -42,31 +41,20 @@ public class Client implements Runnable {
 		Panel panel = new Panel();
 		panel.setLayoutManager(new GridLayout(1));
 
-		panel.addComponent(new Label("l-clavadator"));
-
-		final TextBox messagesTextBox = new TextBox(new TerminalSize(70, 10)).setReadOnly(true).addTo(panel);
+		final TextBox messagesTextBox = new TextBox().setReadOnly(true)
+				.setLayoutData(GridLayout.createLayoutData(Alignment.FILL, Alignment.FILL, true, true)).addTo(panel);
 
 		panel.addComponent(new EmptySpace(new TerminalSize(0, 1)));
 
-		final TextBox messageTextBox = new MyTextBox(messagesTextBox).setPreferredSize(new TerminalSize(70, 1))
-				.addTo(panel);
-
-		panel.addComponent(new EmptySpace(new TerminalSize(0, 0)));
-		new Button("Send", new Runnable() {
-			@Override
-			public void run() {
-				messagesTextBox.addLine(messageTextBox.getText());
-				for (int i = 0; i < messagesTextBox.getLineCount(); ++i) {
-					messagesTextBox.handleKeyStroke(new KeyStroke(KeyType.ArrowDown));
-				}
-			}
-		}).addTo(panel);
-
-		panel.addComponent(new EmptySpace(new TerminalSize(0, 0)));
+		final TextBox messageTextBox = new MyTextBox(messagesTextBox)
+				.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1)).addTo(panel);
 
 		// Create window to hold the panel
-		BasicWindow window = new BasicWindow();
+		BasicWindow window = new BasicWindow("l-clavadator");
+		window.setHints(Collections.singletonList(Window.Hint.FULL_SCREEN));
 		window.setComponent(panel);
+
+		messageTextBox.takeFocus();
 
 		// Create gui and start gui
 		MultiWindowTextGUI gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(),
