@@ -13,7 +13,8 @@ import protocol.commands.Command;
 import protocol.commands.EndOfStream;
 
 public class Stream {
-	SocketChannel sc;
+
+	public SocketChannel sc;
 	Selector selector;
 	SelectionKey key;
 	Object keyAttachement;
@@ -23,15 +24,15 @@ public class Stream {
 	ByteBuffer writeBuffer;
 	Command commandWriting;
 
-	public Queue<Command> receivedCommands;
-	public Queue<Command> commandsToSend;
+	Queue<Command> commandsToSend;
+	public Queue<Event> events;
 
 	public Stream(SocketChannel sc, Selector selector, Object keyAttachement) throws IOException {
 		this.sc = sc;
 		readLine = new ByteArrayOutputStream(128);
 		readBuffer = ByteBuffer.allocate(128);
-		receivedCommands = new ArrayDeque<Command>();
 		commandsToSend = new ArrayDeque<Command>();
+		events = new ArrayDeque<Event>();
 		this.selector = selector;
 		this.keyAttachement = keyAttachement;
 
@@ -61,15 +62,11 @@ public class Stream {
 		sc.close();
 	}
 
-	public boolean doneSending(Command c) {
-		return !commandsToSend.contains(c) && commandWriting != c;
-	}
-
 	private void read() throws IOException {
 		int byte_read = sc.read(readBuffer);
 
 		if (byte_read == -1) {
-			receivedCommands.add(new EndOfStream());
+			events.add(Event.newReceived(new EndOfStream()));
 			return;
 		}
 
@@ -81,8 +78,7 @@ public class Stream {
 			Command command = Command.fromString(readLine.toString());
 			if (command != null) {
 				readLine.reset();
-				receivedCommands.add(command);
-				System.out.println(receivedCommands);
+				events.add(Event.newReceived(command));
 			}
 		}
 
@@ -96,6 +92,10 @@ public class Stream {
 			if (writeBuffer.hasRemaining()) {
 				return;
 			}
+		}
+
+		if (commandWriting != null) {
+			events.add(Event.newSent(commandWriting));
 		}
 
 		if (commandsToSend.isEmpty()) {

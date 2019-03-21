@@ -1,31 +1,41 @@
 package server;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
 import protocol.Stream;
-import server.states.ClientState;
-import server.states.WaitConnect;
+import protocol.commands.Command;
 
 public class Client {
-	public Stream s;
+	Stream stream;
 	ClientState state;
-	public Server server;
+	Server server;
 
-	Client(SocketChannel sc, Selector selector, Server server) throws IOException {
-		this.s = new Stream(sc, selector, this);
-		state = new WaitConnect();
+	public Client(SocketChannel sc, Selector selector, Server server) throws IOException {
+		this.stream = new Stream(sc, selector, this);
+		state = new WaitConnectState(this);
 		this.server = server;
 	}
 
-	void work(int ops) throws IOException {
-		s.work(ops);
+	public void work(int ops) throws IOException {
+		stream.work(ops);
 		state.work();
 
-		while (!s.receivedCommands.isEmpty()) {
-			state = state.process(this, s.receivedCommands.poll());
+		while (!stream.events.isEmpty()) {
+			state = state.process(stream.events.poll());
 			assert (state != null);
 		}
+	}
+
+	public void send(Command command) throws IOException {
+		if (state.sendsCommands()) {
+			stream.send(command);
+		}
+	}
+
+	SocketAddress getRemoteAddress() throws IOException {
+		return stream.sc.getRemoteAddress();
 	}
 }

@@ -1,11 +1,11 @@
 import java.io.IOException;
 
-import server.Server;
+import client.Client;
 
-public class ServerApp {
+public class ClientApp {
 	public static void main(String[] args) {
 		try {
-			(new Server()).start();
+			(new Client()).start();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

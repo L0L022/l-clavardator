@@ -15,7 +15,7 @@ public class Server {
 	final int port = 1234;
 	ServerSocketChannel ssc;
 	Selector selector;
-	public Set<Client> clients;
+	Set<Client> clients;
 
 	public Server() throws IOException {
 		ssc = ServerSocketChannel.open();
@@ -29,7 +29,7 @@ public class Server {
 		clients = new HashSet<Client>();
 	}
 
-	public void demarrer() throws IOException {
+	public void start() throws IOException {
 
 		System.out.println("Lancement du serveur sur le port " + port);
 
