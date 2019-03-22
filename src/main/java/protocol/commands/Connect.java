@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 public class Connect extends Command {
 	public String pseudo;
 
-	Connect(String pseudo) {
+	public Connect(String pseudo) {
 		this.pseudo = pseudo;
 	}
 

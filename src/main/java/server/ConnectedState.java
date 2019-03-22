@@ -22,9 +22,9 @@ public class ConnectedState extends ClientState {
 			log("sent message: " + event.command);
 
 			for (Client c : client.server.clients) {
-				if (c != client) {
-					c.send(new Message(pseudo + "> " + ((Message) event.command).message));
-				}
+//				if (c != client) {
+				c.send(new Message(pseudo + "> " + ((Message) event.command).message));
+//				}
 			}
 
 			return this;

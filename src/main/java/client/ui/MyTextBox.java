@@ -1,13 +1,18 @@
 package client.ui;
 
+import java.io.IOException;
+
 import com.googlecode.lanterna.gui2.Interactable;
 import com.googlecode.lanterna.gui2.TextBox;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 
+import protocol.commands.Message;
+
 public class MyTextBox extends TextBox {
 
 	private TextBox messages;
+	public client.network.Client networkClient;
 
 	public MyTextBox(TextBox messages) {
 		this.messages = messages;
@@ -22,17 +27,13 @@ public class MyTextBox extends TextBox {
 		}
 
 		if (keyStroke.getKeyType() == KeyType.Enter) {
-			if (messages.getText().isEmpty()) {
-				messages.setText(getText());
-			} else {
-				messages.addLine(getText());
+			try {
+				networkClient.send(new Message(getText()));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-
 			setText("");
-
-			for (int i = 0; i < messages.getLineCount(); ++i) {
-				messages.handleKeyStroke(new KeyStroke(KeyType.ArrowDown));
-			}
 
 			return Result.HANDLED;
 		}

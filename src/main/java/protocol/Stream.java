@@ -43,7 +43,9 @@ public class Stream {
 		commandsToSend.add(c);
 
 		if ((key.interestOps() & SelectionKey.OP_WRITE) == 0) {
+			System.out.println("want write");
 			key = sc.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, keyAttachement);
+			selector.wakeup();
 		}
 	}
 
@@ -86,7 +88,9 @@ public class Stream {
 	}
 
 	private void write() throws IOException {
+		System.out.println("write");
 		if (writeBuffer != null) {
+			System.out.println("write stream");
 			sc.write(writeBuffer);
 
 			if (writeBuffer.hasRemaining()) {
@@ -99,9 +103,12 @@ public class Stream {
 		}
 
 		if (commandsToSend.isEmpty()) {
+			System.out.println("nothing write");
 			key = sc.register(selector, SelectionKey.OP_READ, keyAttachement);
+			writeBuffer = null;
 			commandWriting = null;
 		} else {
+			System.out.println("will write");
 			Command c = commandsToSend.poll();
 			writeBuffer = ByteBuffer.wrap(c.toString().getBytes());
 			commandWriting = c;
