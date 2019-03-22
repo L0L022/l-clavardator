@@ -1,43 +1,46 @@
 package client.ui;
 
-import java.io.IOException;
-
 import com.googlecode.lanterna.gui2.Interactable;
 import com.googlecode.lanterna.gui2.TextBox;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 
-import protocol.commands.Message;
-
 public class MyTextBox extends TextBox {
+	private Listener listener;
 
-	private TextBox messages;
-	public client.network.Client networkClient;
+	public interface Listener {
+		void onClosed();
 
-	public MyTextBox(TextBox messages) {
-		this.messages = messages;
+		void onMessageSent(String message);
 	}
 
 	@Override
 	public Interactable.Result handleKeyStroke(KeyStroke keyStroke) {
 		if (keyStroke.getKeyType() == KeyType.EOF || (keyStroke.isCtrlDown()
 				&& (keyStroke.getCharacter().charValue() == 'd' || keyStroke.getCharacter().charValue() == 'c'))) {
-			messages.addLine("FIN");
+
+			if (listener != null) {
+				listener.onClosed();
+			}
+
 			return Result.HANDLED;
 		}
 
 		if (keyStroke.getKeyType() == KeyType.Enter) {
-			try {
-				networkClient.send(new Message(getText()));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+
+			if (listener != null) {
+				listener.onMessageSent(getText());
 			}
+
 			setText("");
 
 			return Result.HANDLED;
 		}
 
 		return super.handleKeyStroke(keyStroke);
+	}
+
+	public void setListener(Listener listener) {
+		this.listener = listener;
 	}
 }

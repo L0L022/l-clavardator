@@ -21,18 +21,20 @@ import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 
-import protocol.Event;
-import protocol.commands.EndOfStream;
-import protocol.commands.Message;
-
 public class Client implements Runnable {
 
 	private Screen screen;
 	private BasicWindow window;
 	private MultiWindowTextGUI gui;
 	private TextBox messagesTextBox;
-	public client.network.Client networkClient;
 	private MyTextBox messageTextBox;
+	private Listener listener;
+
+	public interface Listener {
+		void onClosed();
+
+		void onMessageSent(String message);
+	}
 
 	public Client() throws IOException {
 		// Setup terminal and screen layers
@@ -49,8 +51,25 @@ public class Client implements Runnable {
 
 		panel.addComponent(new EmptySpace(new TerminalSize(0, 1)));
 
-		messageTextBox = new MyTextBox(messagesTextBox);
+		messageTextBox = new MyTextBox();
 		messageTextBox.setLayoutData(GridLayout.createHorizontallyFilledLayoutData(1)).addTo(panel);
+		messageTextBox.setListener(new MyTextBox.Listener() {
+
+			@Override
+			public void onClosed() {
+				if (listener != null) {
+					listener.onClosed();
+				}
+			}
+
+			@Override
+			public void onMessageSent(String message) {
+				if (listener != null) {
+					listener.onMessageSent(message);
+				}
+			}
+
+		});
 
 		// Create window to hold the panel
 		window = new BasicWindow("l-clavadator");
@@ -58,42 +77,55 @@ public class Client implements Runnable {
 		window.setComponent(panel);
 
 		messageTextBox.takeFocus();
-
 	}
 
 	@Override
 	public void run() {
-		messageTextBox.networkClient = networkClient;
-
 		// Create gui and start gui
 		gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
 		gui.addWindowAndWait(window);
 
 		try {
-			networkClient.close();
+			screen.stopScreen();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		if (listener != null) {
+			listener.onClosed();
+		}
 	}
 
-	public void process(Event event) {
-		if (event.isReceived() && event.command instanceof Message) {
-			String message = ((Message) event.command).message;
+	public void setListener(Listener listener) {
+		this.listener = listener;
+	}
 
-			if (messagesTextBox.getText().isEmpty()) {
-				messagesTextBox.setText(message);
-			} else {
-				messagesTextBox.addLine(message);
-			}
+	public void invokeLater(Runnable runnable) {
+		gui.getGUIThread().invokeLater(runnable);
+	}
 
-			for (int i = 0; i < messagesTextBox.getLineCount(); ++i) {
-				messagesTextBox.handleKeyStroke(new KeyStroke(KeyType.ArrowDown));
-			}
+	public void addMessage(String message) {
+		if (messagesTextBox.getText().isEmpty()) {
+			messagesTextBox.setText(message);
+		} else {
+			messagesTextBox.addLine(message);
 		}
 
-		if (event.isReceived() && event.command instanceof EndOfStream) {
-			window.close();
+		for (int i = 0; i < messagesTextBox.getLineCount(); ++i) {
+			messagesTextBox.handleKeyStroke(new KeyStroke(KeyType.ArrowDown));
+		}
+	}
+
+	public void close() {
+		if (!window.isVisible()) {
+			return;
+		}
+
+		window.close();
+
+		if (listener != null) {
+			listener.onClosed();
 		}
 	}
 

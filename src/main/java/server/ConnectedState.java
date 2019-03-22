@@ -19,12 +19,11 @@ public class ConnectedState extends ClientState {
 	@Override
 	public ClientState process(Event event) throws IOException {
 		if (event.isReceived() && event.command instanceof Message) {
-			log("sent message: " + event.command);
+			String message = ((Message) event.command).message;
+			log("sent message: " + message);
 
 			for (Client c : client.server.clients) {
-//				if (c != client) {
-				c.send(new Message(pseudo + "> " + ((Message) event.command).message));
-//				}
+				c.send(new Message(pseudo + "> " + message));
 			}
 
 			return this;
