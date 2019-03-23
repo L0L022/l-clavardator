@@ -1,8 +1,6 @@
 package client.network;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
@@ -10,90 +8,52 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import protocol.Event;
 import protocol.Stream;
 import protocol.commands.Command;
-import protocol.commands.Connect;
-import protocol.commands.EndOfStream;
-import protocol.commands.Message;
 
 public class Client implements Runnable {
-	public client.ui.Client uiClient;
+	protected SocketChannel socketChannel;
+	protected Selector selector;
+	protected Stream stream;
+	protected Listener listener;
 
-	private SocketChannel socketChannel;
-	private Selector selector;
-	private Stream stream;
-	private Listener listener;
 	private List<Runnable> toInvokeLater;
+	protected ClientState state;
+
+	protected String pseudo;
+	protected InetSocketAddress remoteAddress;
 
 	public interface Listener {
 		void onClosed();
 
 		void onMessageReceived(String message);
+
+		void onErrorOccured(String error);
 	}
 
-	public Client() throws IOException {
-		selector = Selector.open();
-
-		socketChannel = SocketChannel.open();
-		socketChannel.connect(new InetSocketAddress("localhost", 1234));
-		socketChannel.configureBlocking(false);
-
-		stream = new Stream(socketChannel, selector, null);
-
+	public Client(InetSocketAddress remoteAddress, String pseudo) {
+		this.pseudo = pseudo;
+		this.remoteAddress = remoteAddress;
 		toInvokeLater = Collections.synchronizedList(new ArrayList<Runnable>());
 	}
 
 	@Override
 	public void run() {
-		try {
-			stream.send(new Connect("loic"));
+		state = InitConnectionState.make(this);
 
-			while (true) {
-				invokeAll();
-
-				if (!selector.isOpen()) {
-					break;
-				}
-
-				selector.select();
-
-				for (SelectionKey sk : selector.selectedKeys()) {
-					if (sk.isReadable() || sk.isWritable()) {
-						stream.work(sk.readyOps());
-
-						while (!stream.events.isEmpty()) {
-							process(stream.events.poll());
-						}
-					}
-				}
-
-				selector.selectedKeys().clear();
-			}
-
+		while (state.run()) {
 			invokeAll();
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+
+		invokeAll();
 	}
 
-	public void send(Command command) throws IOException {
-		stream.send(command);
+	public void send(Command command) {
+		state = state.send(command);
 	}
 
-	public void close() throws IOException {
-		if (!selector.isOpen()) {
-			return;
-		}
-
-		socketChannel.close();
-		selector.close();
-
-		if (listener != null) {
-			listener.onClosed();
-		}
+	public void close() {
+		state = state.close();
 	}
 
 	public void setListener(Listener listener) {
@@ -111,20 +71,6 @@ public class Client implements Runnable {
 		while (it.hasNext()) {
 			it.next().run();
 			it.remove();
-		}
-	}
-
-	private void process(Event event) throws IOException {
-		if (event.isReceived() && event.command instanceof Message) {
-			String message = ((Message) event.command).message;
-
-			if (listener != null) {
-				listener.onMessageReceived(message);
-			}
-		}
-
-		if (event.isReceived() && event.command instanceof EndOfStream) {
-			close();
 		}
 	}
 }

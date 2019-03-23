@@ -1,7 +1,9 @@
 package client.ui;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
@@ -14,6 +16,8 @@ import com.googlecode.lanterna.gui2.MultiWindowTextGUI;
 import com.googlecode.lanterna.gui2.Panel;
 import com.googlecode.lanterna.gui2.TextBox;
 import com.googlecode.lanterna.gui2.Window;
+import com.googlecode.lanterna.gui2.dialogs.MessageDialogBuilder;
+import com.googlecode.lanterna.gui2.dialogs.MessageDialogButton;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
@@ -29,6 +33,7 @@ public class Client implements Runnable {
 	private TextBox messagesTextBox;
 	private MyTextBox messageTextBox;
 	private Listener listener;
+	private List<Runnable> toInvokeLater;
 
 	public interface Listener {
 		void onClosed();
@@ -77,12 +82,21 @@ public class Client implements Runnable {
 		window.setComponent(panel);
 
 		messageTextBox.takeFocus();
+
+		toInvokeLater = Collections.synchronizedList(new ArrayList<Runnable>());
 	}
 
 	@Override
 	public void run() {
 		// Create gui and start gui
 		gui = new MultiWindowTextGUI(screen, new DefaultWindowManager(), new EmptySpace(TextColor.ANSI.BLUE));
+
+		for (Runnable runnable : toInvokeLater) {
+			gui.getGUIThread().invokeLater(runnable);
+		}
+
+		toInvokeLater = null;
+
 		gui.addWindowAndWait(window);
 
 		try {
@@ -102,7 +116,11 @@ public class Client implements Runnable {
 	}
 
 	public void invokeLater(Runnable runnable) {
-		gui.getGUIThread().invokeLater(runnable);
+		if (gui == null) {
+			toInvokeLater.add(runnable);
+		} else {
+			gui.getGUIThread().invokeLater(runnable);
+		}
 	}
 
 	public void addMessage(String message) {
@@ -129,4 +147,8 @@ public class Client implements Runnable {
 		}
 	}
 
+	public void showError(String error) {
+		new MessageDialogBuilder().setTitle("Error occured").setText(error).addButton(MessageDialogButton.OK).build()
+				.showDialog(gui);
+	}
 }

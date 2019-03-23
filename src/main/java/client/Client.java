@@ -1,13 +1,14 @@
 package client;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 
 import protocol.commands.Message;
 
 public class Client {
 
-	public void start() throws IOException {
-		client.network.Client networkClient = new client.network.Client();
+	public void start(InetSocketAddress remoteAddress, String pseudo) throws IOException {
+		client.network.Client networkClient = new client.network.Client(remoteAddress, pseudo);
 		client.ui.Client uiClient = new client.ui.Client();
 
 		networkClient.setListener(new client.network.Client.Listener() {
@@ -31,6 +32,16 @@ public class Client {
 					}
 				});
 			}
+
+			@Override
+			public void onErrorOccured(String error) {
+				uiClient.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						uiClient.showError(error);
+					}
+				});
+			}
 		});
 
 		uiClient.setListener(new client.ui.Client.Listener() {
@@ -40,12 +51,7 @@ public class Client {
 				networkClient.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-						try {
-							networkClient.send(new Message(message));
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+						networkClient.send(new Message(message));
 					}
 				});
 			}
@@ -55,12 +61,7 @@ public class Client {
 				networkClient.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-						try {
-							networkClient.close();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+						networkClient.close();
 					}
 				});
 			}
