@@ -14,41 +14,45 @@ import protocol.commands.EndOfStream;
 
 public class Stream {
 
-	public SocketChannel sc;
-	Selector selector;
-	SelectionKey key;
-	Object keyAttachement;
+	private SocketChannel socketChannel;
+	private Selector selector;
+	private Object keyAttachement;
+	private SelectionKey key;
 
-	ByteArrayOutputStream readLine;
-	ByteBuffer readBuffer;
-	ByteBuffer writeBuffer;
-	Command commandWriting;
+	private ByteArrayOutputStream readLine;
+	private ByteBuffer readBuffer;
 
-	Queue<Command> commandsToSend;
-	public Queue<Event> events;
+	private ByteBuffer writeBuffer;
+	private Command commandWriting;
+	private Queue<Command> commandsToSend;
 
-	public Stream(SocketChannel sc, Selector selector, Object keyAttachement) throws IOException {
-		this.sc = sc;
-		readLine = new ByteArrayOutputStream(128);
-		readBuffer = ByteBuffer.allocate(128);
-		commandsToSend = new ArrayDeque<Command>();
-		events = new ArrayDeque<Event>();
+	private Queue<Event> events;
+
+	public Stream(SocketChannel socketChannel, Selector selector, Object keyAttachement) throws IOException {
+		this.socketChannel = socketChannel;
 		this.selector = selector;
 		this.keyAttachement = keyAttachement;
+		key = this.socketChannel.register(this.selector, SelectionKey.OP_READ, this.keyAttachement);
 
-		key = this.sc.register(this.selector, SelectionKey.OP_READ, this.keyAttachement);
+		readLine = new ByteArrayOutputStream(128);
+		readBuffer = ByteBuffer.allocate(128);
+
+		writeBuffer = null;
+		commandWriting = null;
+		commandsToSend = new ArrayDeque<Command>();
+
+		events = new ArrayDeque<Event>();
 	}
 
-	public void send(Command c) throws IOException {
-		commandsToSend.add(c);
+	public void send(Command command) throws IOException {
+		commandsToSend.add(command);
 
 		if ((key.interestOps() & SelectionKey.OP_WRITE) == 0) {
-			key = sc.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, keyAttachement);
+			key = socketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, keyAttachement);
 		}
 	}
 
 	public void work(int ops) throws IOException {
-
 		if ((ops & SelectionKey.OP_READ) != 0) {
 			read();
 		}
@@ -58,14 +62,22 @@ public class Stream {
 		}
 	}
 
+	public boolean hasEvent() {
+		return !events.isEmpty();
+	}
+
+	public Event pollEvent() {
+		return events.poll();
+	}
+
 	public void close() throws IOException {
-		sc.close();
+		socketChannel.close();
 	}
 
 	private void read() throws IOException {
-		int byte_read = sc.read(readBuffer);
+		int nbBytesRead = socketChannel.read(readBuffer);
 
-		if (byte_read == -1) {
+		if (nbBytesRead == -1) {
 			events.add(Event.newReceived(new EndOfStream()));
 			return;
 		}
@@ -87,7 +99,7 @@ public class Stream {
 
 	private void write() throws IOException {
 		if (writeBuffer != null) {
-			sc.write(writeBuffer);
+			socketChannel.write(writeBuffer);
 
 			if (writeBuffer.hasRemaining()) {
 				return;
@@ -99,7 +111,7 @@ public class Stream {
 		}
 
 		if (commandsToSend.isEmpty()) {
-			key = sc.register(selector, SelectionKey.OP_READ, keyAttachement);
+			key = socketChannel.register(selector, SelectionKey.OP_READ, keyAttachement);
 			writeBuffer = null;
 			commandWriting = null;
 		} else {

@@ -30,8 +30,8 @@ public abstract class ClientState {
 				if (sk.isReadable() || sk.isWritable()) {
 					client.stream.work(sk.readyOps());
 
-					while (!client.stream.events.isEmpty()) {
-						client.state = client.state.processEvent(client.stream.events.poll());
+					while (client.stream.hasEvent()) {
+						client.state = client.state.processEvent(client.stream.pollEvent());
 					}
 				}
 			}

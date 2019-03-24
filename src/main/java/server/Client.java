@@ -33,8 +33,8 @@ public class Client {
 		try {
 			stream.work(ops);
 
-			while (!stream.events.isEmpty()) {
-				state = state.process(stream.events.poll());
+			while (stream.hasEvent()) {
+				state = state.process(stream.pollEvent());
 				assert (state != null);
 			}
 		} catch (IOException e) {
