@@ -11,12 +11,7 @@ public class DisconnectedState extends ClientState {
 		super(client);
 	}
 
-	private DisconnectedState(String error, Client client) {
-		super(client);
-		log(error);
-	}
-
-	private static void disconnect(Client client) {
+	public static ClientState make(Client client) {
 		try {
 			client.stream.close();
 		} catch (IOException e) {
@@ -27,21 +22,8 @@ public class DisconnectedState extends ClientState {
 		if (client.listener != null) {
 			client.listener.onClosed();
 		}
-	}
 
-	public static ClientState make(Client client) {
-		disconnect(client);
 		return new DisconnectedState(client);
-	}
-
-	public static ClientState makeLogicalError(String error, Client client) {
-		disconnect(client);
-		return new DisconnectedState("logical error: " + error, client);
-	}
-
-	public static ClientState makeProtocolError(String error, Client client) {
-		disconnect(client);
-		return new DisconnectedState("protocol error: " + error, client);
 	}
 
 	@Override

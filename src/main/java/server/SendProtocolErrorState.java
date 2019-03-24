@@ -8,22 +8,20 @@ import protocol.commands.Command;
 public class SendProtocolErrorState extends ClientState {
 
 	private Command errorCommand;
-	private String errorMessage;
 
-	private SendProtocolErrorState(Command errorCommand, String errorMessage, Client client) {
+	private SendProtocolErrorState(Command errorCommand, Client client) {
 		super(client);
 		this.errorCommand = errorCommand;
-		this.errorMessage = errorMessage;
 	}
 
-	public static ClientState make(Command errorCommand, String errorMessage, Client client) {
+	public static ClientState make(Command errorCommand, Client client) {
 		try {
 			client.stream.send(errorCommand);
-			return new SendProtocolErrorState(errorCommand, errorMessage, client);
+			return new SendProtocolErrorState(errorCommand, client);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return DisconnectedState.makeLogicalError(e.toString(), client);
+			return DisconnectedState.make(client);
 		}
 	}
 
@@ -34,15 +32,17 @@ public class SendProtocolErrorState extends ClientState {
 		}
 
 		if (event.isSent() && errorCommand.equals(event.command)) {
-			return DisconnectedState.makeProtocolError(errorMessage, client);
+			return DisconnectedState.make(client);
 		}
 
-		return DisconnectedState.makeLogicalError("unexpected event: " + event, client);
+		logicalError("unexpected event: " + event);
+		return DisconnectedState.make(client);
 	}
 
 	@Override
 	public ClientState send(Command command) {
-		return DisconnectedState.makeLogicalError("send not allowed", client);
+		logicalError("send not allowed");
+		return DisconnectedState.make(client);
 	}
 
 	@Override

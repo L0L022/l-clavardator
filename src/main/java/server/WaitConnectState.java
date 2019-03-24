@@ -20,16 +20,19 @@ public class WaitConnectState extends ClientState {
 			if (event.command instanceof Connect) {
 				return ConnectedState.make(((Connect) event.command).pseudo, client);
 			} else {
-				return SendProtocolErrorState.make(new protocol.commands.ConnectError(), "connect error", client);
+				protocolError("unexpected event: " + event);
+				return SendProtocolErrorState.make(new protocol.commands.ConnectError(), client);
 			}
 		}
 
-		return DisconnectedState.makeLogicalError("unexpected event: " + event, client);
+		logicalError("unexpected event: " + event);
+		return DisconnectedState.make(client);
 	}
 
 	@Override
 	public ClientState send(Command command) {
-		return DisconnectedState.makeLogicalError("send not allowed", client);
+		logicalError("send not allowed");
+		return DisconnectedState.make(client);
 	}
 
 	@Override

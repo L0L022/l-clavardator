@@ -22,7 +22,7 @@ public class ConnectedState extends ClientState {
 		if (event.isReceived()) {
 			if (event.command instanceof Message) {
 				String message = ((Message) event.command).message;
-				log("sent message: " + message);
+				log("[sent message][" + message + "]");
 
 				if (client.listener != null) {
 					client.listener.onMessageReceived(message);
@@ -35,14 +35,16 @@ public class ConnectedState extends ClientState {
 				return DisconnectedState.make(client);
 			}
 
-			return SendProtocolErrorState.make(new protocol.commands.Error(), "unexpected event: " + event, client);
+			protocolError("unexpected event: " + event);
+			return SendProtocolErrorState.make(new protocol.commands.Error(), client);
 		}
 
 		if (event.isSent() && event.command instanceof Message) {
 			return this;
 		}
 
-		return DisconnectedState.makeLogicalError("unexpected event: " + event, client);
+		logicalError("unexpected event: " + event);
+		return DisconnectedState.make(client);
 	}
 
 	@Override
@@ -53,7 +55,8 @@ public class ConnectedState extends ClientState {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return DisconnectedState.makeLogicalError(e.toString(), client);
+			logicalError(e.toString());
+			return DisconnectedState.make(client);
 		}
 	}
 

@@ -11,7 +11,7 @@ public abstract class ClientState {
 
 	protected ClientState(Client client) {
 		this.client = client;
-		log(null);
+		log("");
 	}
 
 	public abstract ClientState process(Event event);
@@ -35,11 +35,14 @@ public abstract class ClientState {
 		} catch (IOException e) {
 		}
 
-		String finalMessage = "[" + client.pseudo + "][" + address + "][" + name() + "]";
-		if (message != null) {
-			finalMessage += ": " + message;
-		}
+		System.out.println("[" + client.pseudo + "][" + address + "][" + name() + "]" + message);
+	}
 
-		System.out.println(finalMessage);
+	protected void protocolError(String message) {
+		log("[protocol error]" + message);
+	}
+
+	protected void logicalError(String message) {
+		log("[logical error]" + message);
 	}
 }

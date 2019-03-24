@@ -41,7 +41,7 @@ public class Client {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			state = DisconnectedState.makeLogicalError(e.toString(), this);
+			state = DisconnectedState.make(this);
 		}
 	}
 
