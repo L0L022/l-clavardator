@@ -1,30 +1,21 @@
 package server;
 
-import java.io.IOException;
-
 import protocol.Event;
+import protocol.commands.Command;
 
 public abstract class ClientState {
 
 	protected Client client;
 
-	public ClientState(Client client) {
+	protected ClientState(Client client) {
 		this.client = client;
 	}
 
-	public ClientState process(Event event) throws IOException {
-		return this;
-	}
+	public abstract ClientState process(Event event);
 
-	public ClientState work() throws IOException {
-		return this;
-	}
+	public abstract ClientState send(Command command);
 
-	public boolean sendsCommands() {
-		return true;
-	}
-
-	protected void log(String message) throws IOException {
-		System.out.println("[" + client.getRemoteAddress() + "]: " + message);
+	protected void log(String message) {
+		System.out.println("[" + client + "]: " + message);
 	}
 }

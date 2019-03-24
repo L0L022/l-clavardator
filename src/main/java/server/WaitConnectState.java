@@ -1,29 +1,35 @@
 package server;
 
-import java.io.IOException;
-
 import protocol.Event;
+import protocol.commands.Command;
 import protocol.commands.Connect;
 
 public class WaitConnectState extends ClientState {
 
-	public WaitConnectState(Client client) throws IOException {
+	private WaitConnectState(Client client) {
 		super(client);
 		log("wait connect");
 	}
 
-	@Override
-	public boolean sendsCommands() {
-		return false;
+	public static ClientState make(Client client) {
+		return new WaitConnectState(client);
 	}
 
 	@Override
-	public ClientState process(Event event) throws IOException {
-		if (event.isReceived() && event.command instanceof Connect) {
-			return new ConnectedState(((Connect) event.command).pseudo, client);
+	public ClientState process(Event event) {
+		if (event.isReceived()) {
+			if (event.command instanceof Connect) {
+				return ConnectedState.make(((Connect) event.command).pseudo, client);
+			} else {
+				return ErrorConnectState.make(client);
+			}
 		}
 
-		return new ErrorState(client);
+		return DisconnectedState.makeLogicalError("can't process " + event + " in WaitConnectState", client);
 	}
 
+	@Override
+	public ClientState send(Command command) {
+		return DisconnectedState.makeLogicalError("can't send in WaitConnectState", client);
+	}
 }
