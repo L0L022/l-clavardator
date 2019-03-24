@@ -45,11 +45,11 @@ public class Stream {
 	}
 
 	public void send(Command command) throws IOException {
-		commandsToSend.add(command);
-
 		if ((key.interestOps() & SelectionKey.OP_WRITE) == 0) {
 			key = socketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, keyAttachement);
 		}
+
+		commandsToSend.add(command);
 	}
 
 	public void work(int ops) throws IOException {
