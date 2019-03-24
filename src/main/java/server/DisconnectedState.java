@@ -24,7 +24,10 @@ public class DisconnectedState extends ClientState {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		client.server.clients.remove(client);
+
+		if (client.listener != null) {
+			client.listener.onClosed();
+		}
 	}
 
 	public static ClientState make(Client client) {
@@ -51,5 +54,10 @@ public class DisconnectedState extends ClientState {
 	public ClientState send(Command command) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public boolean canSend() {
+		return false;
 	}
 }

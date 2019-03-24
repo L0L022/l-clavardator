@@ -11,6 +11,9 @@ import java.nio.channels.SocketChannel;
 import java.util.HashSet;
 import java.util.Set;
 
+import protocol.commands.Message;
+import server.Client.Listener;
+
 public class Server {
 	final int port = 1234;
 	ServerSocketChannel ssc;
@@ -41,8 +44,31 @@ public class Server {
 					SocketChannel sc = ssc.accept();
 					sc.configureBlocking(false);
 
-					Client c = new Client(sc, selector, this);
-					clients.add(c);
+					Client client = new Client(sc, selector);
+					client.setListener(new Listener() {
+
+						@Override
+						public void onClosed() {
+							clients.remove(client);
+						}
+
+						@Override
+						public void onMessageReceived(String message) {
+							for (Client c : clients) {
+								if (c.canSend()) {
+									c.send(new Message(client.pseudo + "> " + message));
+								}
+							}
+						}
+
+						@Override
+						public void onErrorOccured(String error) {
+							// TODO Auto-generated method stub
+
+						}
+
+					});
+					clients.add(client);
 				}
 
 				if (sk.isReadable() || sk.isWritable()) {

@@ -8,14 +8,21 @@ import protocol.Stream;
 import protocol.commands.Command;
 
 public class Client {
-	protected Server server;
 	protected Stream stream;
 	protected String pseudo;
+	protected Listener listener;
 
 	protected ClientState state;
 
-	public Client(SocketChannel sc, Selector selector, Server server) throws IOException {
-		this.server = server;
+	public interface Listener {
+		void onClosed();
+
+		void onMessageReceived(String message);
+
+		void onErrorOccured(String error);
+	}
+
+	public Client(SocketChannel sc, Selector selector) throws IOException {
 		stream = new Stream(sc, selector, this);
 		pseudo = "";
 
@@ -37,7 +44,15 @@ public class Client {
 		}
 	}
 
+	public boolean canSend() {
+		return state.canSend();
+	}
+
 	public void send(Command command) {
 		state = state.send(command);
+	}
+
+	public void setListener(Listener listener) {
+		this.listener = listener;
 	}
 }

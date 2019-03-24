@@ -25,9 +25,8 @@ public class ConnectedState extends ClientState {
 				String message = ((Message) event.command).message;
 				log("sent message: " + message);
 
-				// TODO ajout listener + check client.send
-				for (Client c : client.server.clients) {
-					c.send(new Message(client.pseudo + "> " + message));
+				if (client.listener != null) {
+					client.listener.onMessageReceived(message);
 				}
 
 				return this;
@@ -55,6 +54,11 @@ public class ConnectedState extends ClientState {
 			e.printStackTrace();
 			return DisconnectedState.makeLogicalError(e.toString(), client);
 		}
+	}
+
+	@Override
+	public boolean canSend() {
+		return true;
 	}
 
 }

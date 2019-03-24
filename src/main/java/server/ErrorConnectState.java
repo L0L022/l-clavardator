@@ -37,4 +37,9 @@ public class ErrorConnectState extends ClientState {
 		return DisconnectedState.makeLogicalError("can't send in ErrorConnectState", client);
 	}
 
+	@Override
+	public boolean canSend() {
+		return false;
+	}
+
 }

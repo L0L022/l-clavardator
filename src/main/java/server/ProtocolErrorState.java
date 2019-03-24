@@ -40,4 +40,9 @@ public class ProtocolErrorState extends ClientState {
 		return DisconnectedState.makeLogicalError("can't send in ProtocolErrorState", client);
 	}
 
+	@Override
+	public boolean canSend() {
+		return false;
+	}
+
 }

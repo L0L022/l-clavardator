@@ -15,7 +15,10 @@ public abstract class ClientState {
 
 	public abstract ClientState send(Command command);
 
+	public abstract boolean canSend();
+
 	protected void log(String message) {
 		System.out.println("[" + client + "]: " + message);
 	}
+
 }

@@ -32,4 +32,9 @@ public class WaitConnectState extends ClientState {
 	public ClientState send(Command command) {
 		return DisconnectedState.makeLogicalError("can't send in WaitConnectState", client);
 	}
+
+	@Override
+	public boolean canSend() {
+		return false;
+	}
 }
