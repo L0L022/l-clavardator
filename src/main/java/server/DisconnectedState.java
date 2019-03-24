@@ -9,12 +9,11 @@ public class DisconnectedState extends ClientState {
 
 	private DisconnectedState(Client client) {
 		super(client);
-		log("disconnected");
 	}
 
 	private DisconnectedState(String error, Client client) {
 		super(client);
-		log("disconnected with an " + error);
+		log(error);
 	}
 
 	private static void disconnect(Client client) {
@@ -59,5 +58,10 @@ public class DisconnectedState extends ClientState {
 	@Override
 	public boolean canSend() {
 		return false;
+	}
+
+	@Override
+	public String name() {
+		return "disconnected";
 	}
 }

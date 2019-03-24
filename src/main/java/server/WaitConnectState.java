@@ -8,7 +8,6 @@ public class WaitConnectState extends ClientState {
 
 	private WaitConnectState(Client client) {
 		super(client);
-		log("wait connect");
 	}
 
 	public static ClientState make(Client client) {
@@ -21,20 +20,25 @@ public class WaitConnectState extends ClientState {
 			if (event.command instanceof Connect) {
 				return ConnectedState.make(((Connect) event.command).pseudo, client);
 			} else {
-				return ErrorConnectState.make(client);
+				return SendProtocolErrorState.make(new protocol.commands.ConnectError(), "connect error", client);
 			}
 		}
 
-		return DisconnectedState.makeLogicalError("can't process " + event + " in WaitConnectState", client);
+		return DisconnectedState.makeLogicalError("unexpected event: " + event, client);
 	}
 
 	@Override
 	public ClientState send(Command command) {
-		return DisconnectedState.makeLogicalError("can't send in WaitConnectState", client);
+		return DisconnectedState.makeLogicalError("send not allowed", client);
 	}
 
 	@Override
 	public boolean canSend() {
 		return false;
+	}
+
+	@Override
+	public String name() {
+		return "wait connect";
 	}
 }

@@ -8,6 +8,7 @@ import protocol.Stream;
 import protocol.commands.Command;
 
 public class Client {
+	protected SocketChannel socketChannel;
 	protected Stream stream;
 	protected String pseudo;
 	protected Listener listener;
@@ -23,6 +24,7 @@ public class Client {
 	}
 
 	public Client(SocketChannel sc, Selector selector) throws IOException {
+		socketChannel = sc;
 		stream = new Stream(sc, selector, this);
 		pseudo = "";
 
@@ -35,7 +37,6 @@ public class Client {
 
 			while (stream.hasEvent()) {
 				state = state.process(stream.pollEvent());
-				assert (state != null);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

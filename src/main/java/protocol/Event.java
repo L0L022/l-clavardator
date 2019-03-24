@@ -30,4 +30,20 @@ public class Event {
 	static Event newSent(Command command) {
 		return new Event(Type.Sent, command);
 	}
+
+	@Override
+	public String toString() {
+		String typeStr = "";
+
+		switch (type) {
+		case Received:
+			typeStr = "received";
+			break;
+		case Sent:
+			typeStr = "sent";
+			break;
+		}
+
+		return typeStr + ": " + command;
+	}
 }

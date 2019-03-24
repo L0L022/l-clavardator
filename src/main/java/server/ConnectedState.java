@@ -10,7 +10,6 @@ import protocol.commands.Message;
 public class ConnectedState extends ClientState {
 	private ConnectedState(Client client) {
 		super(client);
-		log(client.pseudo + " connected");
 	}
 
 	public static ClientState make(String pseudo, Client client) {
@@ -35,13 +34,15 @@ public class ConnectedState extends ClientState {
 			if (event.command instanceof EndOfStream) {
 				return DisconnectedState.make(client);
 			}
+
+			return SendProtocolErrorState.make(new protocol.commands.Error(), "unexpected event: " + event, client);
 		}
 
 		if (event.isSent() && event.command instanceof Message) {
 			return this;
 		}
 
-		return ProtocolErrorState.make("unexpected event: " + event + " in ConnectedState", client);
+		return DisconnectedState.makeLogicalError("unexpected event: " + event, client);
 	}
 
 	@Override
@@ -59,6 +60,11 @@ public class ConnectedState extends ClientState {
 	@Override
 	public boolean canSend() {
 		return true;
+	}
+
+	@Override
+	public String name() {
+		return "connected";
 	}
 
 }
