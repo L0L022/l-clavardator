@@ -1,7 +1,6 @@
 package server;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.channels.SelectionKey;
@@ -15,16 +14,16 @@ import protocol.commands.Message;
 import server.Client.Listener;
 
 public class Server {
-	final int port = 1234;
+	final int port = 12345;
 	ServerSocketChannel ssc;
 	Selector selector;
 	Set<Client> clients;
 
 	public Server() throws IOException {
 		ssc = ServerSocketChannel.open();
-		ssc.configureBlocking(false);
 		ssc.setOption(StandardSocketOptions.SO_REUSEADDR, true);
-		ssc.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), port));
+		ssc.bind(new InetSocketAddress(port));
+		ssc.configureBlocking(false);
 
 		selector = Selector.open();
 		ssc.register(selector, SelectionKey.OP_ACCEPT);
