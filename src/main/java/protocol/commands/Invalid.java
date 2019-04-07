@@ -15,10 +15,15 @@ public class Invalid extends Command {
 		return command + "\n";
 	}
 
+	private static Pattern pattern;
+
 	public static Command fromString(String str) {
-		Pattern p = Pattern.compile("^(.*)\n$");
-		Matcher m = p.matcher(str);
-		while (m.find()) {
+		if (pattern == null) {
+			pattern = Pattern.compile("^(.*)\n$");
+		}
+
+		Matcher m = pattern.matcher(str);
+		if (m.find()) {
 			return new Invalid(m.group(1));
 		}
 

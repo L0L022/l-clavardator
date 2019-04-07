@@ -10,10 +10,14 @@ public class ServerConnect extends Command {
 		return "SERVERCONNECT\n";
 	}
 
-	public static Command fromString(String str) {
-		Pattern p = Pattern.compile("^SERVERCONNECT\n$");
-		Matcher m = p.matcher(str);
+	private static Pattern pattern;
 
+	public static Command fromString(String str) {
+		if (pattern == null) {
+			pattern = Pattern.compile("^SERVERCONNECT\n$");
+		}
+
+		Matcher m = pattern.matcher(str);
 		if (m.matches()) {
 			return new ServerConnect();
 		}

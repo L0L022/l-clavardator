@@ -15,12 +15,16 @@ public class Connect extends Command {
 		return "CONNECT " + pseudo + "\n";
 	}
 
-	public static Command fromString(String str) {
-		Pattern p = Pattern.compile("^CONNECT (.*)\n$");
-		Matcher m = p.matcher(str);
-		while (m.find()) {
-			return new Connect(m.group(1));
+	private static Pattern pattern;
 
+	public static Command fromString(String str) {
+		if (pattern == null) {
+			pattern = Pattern.compile("^CONNECT (.*)\n$");
+		}
+
+		Matcher m = pattern.matcher(str);
+		if (m.find()) {
+			return new Connect(m.group(1));
 		}
 
 		return null;
