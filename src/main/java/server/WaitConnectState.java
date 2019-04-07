@@ -18,7 +18,7 @@ public class WaitConnectState extends ClientState {
 	public ClientState process(Event event) {
 		if (event.isReceived()) {
 			if (event.command instanceof Connect) {
-				return ConnectedState.make(((Connect) event.command).pseudo, client);
+				return ConnectedState.makeClient(((Connect) event.command).pseudo, client);
 			} else {
 				protocolError("unexpected event: " + event);
 				return SendProtocolErrorState.make(new protocol.commands.ConnectError(), client);

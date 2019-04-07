@@ -8,12 +8,19 @@ import protocol.commands.EndOfStream;
 import protocol.commands.Message;
 
 public class ConnectedState extends ClientState {
+
 	private ConnectedState(Client client) {
 		super(client);
 	}
 
-	public static ClientState make(String pseudo, Client client) {
+	public static ClientState makeClient(String pseudo, Client client) {
 		client.pseudo = pseudo;
+		client.kind = Client.Kind.Client;
+		return new ConnectedState(client);
+	}
+
+	public static ClientState makeServer(Client client) {
+		client.kind = Client.Kind.Server;
 		return new ConnectedState(client);
 	}
 

@@ -8,27 +8,34 @@ import protocol.Stream;
 import protocol.commands.Command;
 
 public class Client {
+	enum Kind {
+		Client, Server
+	};
+
 	protected SocketChannel socketChannel;
 	protected Stream stream;
 	protected String pseudo;
+	protected Kind kind;
 	protected Listener listener;
 
 	protected ClientState state;
+
+	public interface ClientStateMaker {
+		ClientState make(Client client);
+	}
 
 	public interface Listener {
 		void onClosed();
 
 		void onMessageReceived(String message);
-
-		void onErrorOccured(String error);
 	}
 
-	public Client(SocketChannel sc, Selector selector) throws IOException {
+	public Client(SocketChannel sc, Selector selector, ClientStateMaker clientStateMaker) throws IOException {
 		socketChannel = sc;
 		stream = new Stream(sc, selector, this);
 		pseudo = "";
 
-		state = WaitConnectState.make(this);
+		state = clientStateMaker.make(this);
 	}
 
 	public void work(int ops) {

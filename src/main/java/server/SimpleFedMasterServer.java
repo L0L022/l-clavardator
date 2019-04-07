@@ -13,13 +13,15 @@ import java.util.Set;
 import protocol.commands.Message;
 import server.Client.Listener;
 
-public class Server {
-	final int port = 12345;
+public class SimpleFedMasterServer {
+	int port;
 	ServerSocketChannel ssc;
 	Selector selector;
 	Set<Client> clients;
 
-	public Server() throws IOException {
+	public SimpleFedMasterServer(int port) throws IOException {
+		this.port = port;
+
 		ssc = ServerSocketChannel.open();
 		ssc.setOption(StandardSocketOptions.SO_REUSEADDR, true);
 		ssc.bind(new InetSocketAddress(port));
@@ -43,7 +45,13 @@ public class Server {
 					SocketChannel sc = ssc.accept();
 					sc.configureBlocking(false);
 
-					Client client = new Client(sc, selector);
+					Client client = new Client(sc, selector, new Client.ClientStateMaker() {
+
+						@Override
+						public ClientState make(Client client) {
+							return FedWaitConnectState.make(client);
+						}
+					});
 					client.setListener(new Listener() {
 
 						@Override
@@ -53,17 +61,21 @@ public class Server {
 
 						@Override
 						public void onMessageReceived(String message) {
-							for (Client c : clients) {
-								if (c.canSend()) {
-									c.send(new Message(client.pseudo + "> " + message));
+							if (client.kind == Client.Kind.Client) {
+								for (Client c : clients) {
+									if (c.canSend()) {
+										c.send(new Message(client.pseudo + "> " + message));
+									}
 								}
 							}
-						}
 
-						@Override
-						public void onErrorOccured(String error) {
-							// TODO Auto-generated method stub
-
+							if (client.kind == Client.Kind.Server) {
+								for (Client c : clients) {
+									if (c.canSend() && c != client) {
+										c.send(new Message(message));
+									}
+								}
+							}
 						}
 
 					});

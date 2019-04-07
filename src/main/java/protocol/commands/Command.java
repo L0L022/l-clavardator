@@ -14,6 +14,11 @@ public class Command {
 			return c;
 		}
 
+		c = ServerConnect.fromString(str);
+		if (c != null) {
+			return c;
+		}
+
 		c = Invalid.fromString(str);
 		if (c != null) {
 			return c;
