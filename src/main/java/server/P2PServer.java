@@ -60,11 +60,12 @@ public class P2PServer {
 
 			@Override
 			public void onMessageReceived(String message) {
-				for (Client c : clients) {
-					if (c.canSend()) {
-						c.send(new Message(client.pseudo + "> " + message));
-					}
-				}
+				System.out.println("PAS POSSIBLE 1");
+//				for (Client c : clients) {
+//					if (c.canSend()) {
+//						c.send(new Message(client.pseudo + "> " + message));
+//					}
+//				}
 			}
 
 		});
@@ -101,10 +102,16 @@ public class P2PServer {
 
 						@Override
 						public void onMessageReceived(String message) {
-							for (Client c : clients) {
-								if (c.canSend()) {
-									c.send(new Message(client.pseudo + "> " + message));
+							if (client.kind == Client.Kind.Client) {
+								for (Client c : clients) {
+									if (c.canSend()) {
+										c.send(new Message(client.pseudo + "> " + message));
+									}
 								}
+							}
+
+							if (client.kind == Client.Kind.Server) {
+								System.out.println("PAS POSSIBLE 2");
 							}
 						}
 
@@ -132,7 +139,7 @@ public class P2PServer {
 				}
 
 				if (event.isSent()) {
-					// pas possible pour le moment
+					System.out.println("PAS POSSIBLE 3");
 				}
 			}
 		}

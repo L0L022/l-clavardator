@@ -38,7 +38,7 @@ public class P2PSendServerConnectState extends ClientState {
 	@Override
 	public ClientState process(Event event) {
 		if (event.isSent() && commandSent.equals(event.command)) {
-			return P2PConnectedState.makeServer(client);
+			return P2PConnectedState.makeServer(causalStream, client);
 		}
 
 		logicalError("unexpected event: " + event);
@@ -52,7 +52,7 @@ public class P2PSendServerConnectState extends ClientState {
 
 	@Override
 	public String name() {
-		return "send server connect";
+		return "P2P send server connect";
 	}
 
 }

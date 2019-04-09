@@ -9,6 +9,7 @@ public class Command {
 			return c;
 		}
 		if (str.startsWith("CAUSAL")) {
+			System.out.println("clause pas fini");
 			return null;
 		}
 

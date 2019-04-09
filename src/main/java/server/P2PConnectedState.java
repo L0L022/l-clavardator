@@ -22,6 +22,7 @@ public class P2PConnectedState extends ConnectedState {
 
 	@Override
 	public ClientState process(Event event) {
+		log("process: " + event);
 		if (event.isSent() && event.command instanceof Causal) {
 			return this;
 		}

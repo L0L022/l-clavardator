@@ -38,33 +38,39 @@ public class Causal extends Command {
 
 		try {
 			byte[] bs = sent.toByteArray();
-			byte[] bs_t = new String(bs, "ISO-8859-1").getBytes("ISO-8859-1");
-
+			// byte[] bs_t = new String(bs, "ISO-8859-1").getBytes("ISO-8859-1");
+			System.out.println("TAILLE: " + bs.length);
 			byte[] size = ByteBuffer.allocate(4).putInt(bs.length).array();
-
+			byte[] command_b = command.toString().getBytes("ISO-8859-1");
 			sb.append(new String(size, "ISO-8859-1"));
-			sb.append(new String(bs, "ISO-8859-1"));
-
-			if (bs.length != bs_t.length) {
-				System.out.println("pas bonne taille lol");
-			} else {
-				for (int i = 0; i < bs.length; ++i) {
-					System.out.print(Integer.toHexString(bs[i]) + " " + Integer.toHexString(bs_t[i]) + " ");
-
-					if (bs[i] == bs_t[i]) {
-						System.out.println("ok");
-					} else {
-						System.out.println("error");
-					}
-				}
+			byte[] data = ByteBuffer.allocate(bs.length + command_b.length).put(bs).put(command_b).array();
+			for (int i = 0; i < data.length; ++i) {
+				byte[] t = new byte[1];
+				t[0] = data[i];
+				System.out.println(i + " " + Integer.toHexString(data[i]) + ": " + new String(t, "ISO-8859-1"));
 			}
+
+			sb.append(new String(data, "ISO-8859-1"));
+
+//			if (bs.length != bs_t.length) {
+//				System.out.println("pas bonne taille lol");
+//			} else {
+//				for (int i = 0; i < bs.length; ++i) {
+//					System.out.print(Integer.toHexString(bs[i]) + " " + Integer.toHexString(bs_t[i]) + " ");
+//
+//					if (bs[i] == bs_t[i]) {
+//						System.out.println("ok");
+//					} else {
+//						System.out.println("error");
+//					}
+//				}
+//			}
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 //		sb.append("| ");
 
-		sb.append(command.toString());
 		return sb.toString();
 	}
 
@@ -74,33 +80,43 @@ public class Causal extends Command {
 		if (pattern == null) {
 //			pattern = Pattern.compile("^CAUSAL ([^ ]*) ([^ ]*) (.*)\n$");
 //			pattern = Pattern.compile("^CAUSAL \\|(.*)\\| (.*)\n$");
-			pattern = Pattern.compile("^CAUSAL (....)(.*)$");
+			pattern = Pattern.compile("^CAUSAL (....)([\\s\\S]*)$");
 		}
 		try {
 			Matcher m = pattern.matcher(new String(str.getBytes(), "ISO-8859-1"));
+			System.out.println(str);
 
 			if (m.find()) {
-				System.out.println("match: " + m.group(1) + " " + m.group(2));
+//				System.out.println("match: " + m.group(1) + " " + m.group(2));
 
 				byte[] size_b = m.group(1).getBytes("ISO-8859-1");
 				int size = ByteBuffer.allocate(4).put(size_b).flip().getInt();
 
-				System.out.println("bytes received: ");
+//				System.out.println("bytes received: ");
+//
+//				for (byte theByte : size_b) {
+//					System.out.println(Integer.toHexString(theByte));
+//				}
 
-				for (byte theByte : size_b) {
-					System.out.println(Integer.toHexString(theByte));
-				}
-
-				System.out.println("taille: " + size);
+//				System.out.println("taille: " + size);
 
 				byte[] data = m.group(2).getBytes("ISO-8859-1");
+
+				System.out.println(data.length + " " + size);
 
 				if (data.length < size) {
 					return null;
 				}
 
-				byte[] clean_data = ByteBuffer.wrap(data, 0, size).array();
-				byte[] command = ByteBuffer.wrap(data, size, data.length - size).array();
+				for (int i = 0; i < data.length; ++i) {
+					byte[] t = new byte[1];
+					t[0] = data[i];
+					System.out.println(i + " " + Integer.toHexString(data[i]) + ": " + new String(t, "ISO-8859-1"));
+				}
+
+				byte[] clean_data = ByteBuffer.allocate(size).put(ByteBuffer.wrap(data, 0, size)).array();
+				byte[] command = ByteBuffer.allocate(data.length - size)
+						.put(ByteBuffer.wrap(data, size, data.length - size)).array();
 
 //			String idsStr = m.group(1);
 //			String sentStr = m.group(2);
@@ -117,9 +133,21 @@ public class Causal extends Command {
 //
 //			causal.command = Command.fromString(commandStr + "\n");
 
+				System.out.println("clean_data: " + new String(clean_data, "ISO-8859-1"));
+				System.out.println("command: " + new String(command, "ISO-8859-1"));
+
 				Causal causal = new Causal();
 				causal.sent = Sent.fromByteArray(clean_data);
+
+				if (causal.sent == null) {
+					return null;
+				}
+
 				causal.command = Command.fromString(new String(command) + "\n");
+
+				if (causal.command == null) {
+					return null;
+				}
 
 				return causal;
 			}

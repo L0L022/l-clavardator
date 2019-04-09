@@ -24,6 +24,7 @@ public class Invalid extends Command {
 
 		Matcher m = pattern.matcher(str);
 		if (m.find()) {
+			System.out.println("invalide");
 			return new Invalid(m.group(1));
 		}
 
