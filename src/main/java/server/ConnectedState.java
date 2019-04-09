@@ -9,7 +9,7 @@ import protocol.commands.Message;
 
 public class ConnectedState extends ClientState {
 
-	private ConnectedState(Client client) {
+	protected ConnectedState(Client client) {
 		super(client);
 	}
 
@@ -26,6 +26,8 @@ public class ConnectedState extends ClientState {
 
 	@Override
 	public ClientState process(Event event) {
+		System.out.println("normal process: " + event);
+
 		if (event.isReceived()) {
 			if (event.command instanceof Message) {
 				String message = ((Message) event.command).message;

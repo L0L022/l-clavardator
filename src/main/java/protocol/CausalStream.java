@@ -1,106 +1,108 @@
 package protocol;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.net.InetSocketAddress;
-import java.util.HashMap;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import protocol.commands.Causal;
 import protocol.commands.Command;
 
 public class CausalStream {
-	private class MutableInteger implements Serializable {
-		private static final long serialVersionUID = 1L;
-		public int value;
 
-		public MutableInteger(int value) {
-			this.value = value;
+	private class CausalWaiting {
+		public Causal causal;
+		public String from;
+		public String to;
+
+		public CausalWaiting(Causal causal, String from, String to) {
+			this.causal = causal;
+			this.from = from;
+			this.to = to;
 		}
 	}
 
-	private Map<String, MutableInteger> rec;
-	private Map<String, Map<String, MutableInteger>> sent;
+	private Rec rec;
+	private Sent sent;
+	private List<CausalWaiting> causalsWainting;
+	private Queue<Event> events; // manque FROM; que les reçus ?
 
 	public CausalStream() {
-		rec = new HashMap<>();
-		sent = new HashMap<>();
+		rec = new Rec();
+		sent = new Sent();
+		causalsWainting = new ArrayList<CausalWaiting>();
+		events = new ArrayDeque<Event>();
 	}
 
-	void send(Command command, InetSocketAddress from, InetSocketAddress to) throws IOException {
-		sent.getOrDefault(from, new HashMap<>()).getOrDefault(to, new MutableInteger(0)).value += 1;
+	public boolean hasEvent() {
+		return !events.isEmpty();
+	}
 
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(baos);
-		oos.writeObject(sent);
-		oos.close();
+	public Event pollEvent() {
+		return events.poll();
+	}
+
+	public Causal send(Command command, String from, String to) {
+		sent.get(from, to).value += 1;
 
 		Causal causal = new Causal();
-		causal.data = baos.toString();
+		causal.sent = Sent.fromByteArray(sent.toByteArray()); // deep copy
 		causal.command = command;
 
-		// envoie sur le bon stream
+		return causal;
 	}
 
-	void receive(Causal causal, InetSocketAddress from, InetSocketAddress to)
-			throws IOException, ClassNotFoundException {
-		ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(causal.data.getBytes()));
-		Map<String, Map<String, MutableInteger>> causal_sent = (Map<String, Map<String, MutableInteger>>) ois
-				.readObject();
-		ois.close();
+	public void receive(Causal causal, String from, String to) {
+		causalsWainting.add(new CausalWaiting(causal, from, to));
+		boolean causalsWaintingUpdated = true;
 
-		if (recOf(from).value + 1 != getSentOf(causal_sent, from, to).value) {
-			// on doit att un autre receive
-			return;
-		}
+		while (causalsWaintingUpdated) {
+			causalsWaintingUpdated = false;
 
-		for (Map.Entry<String, MutableInteger> e : rec.entrySet()) {
-			if (!e.getKey().equals(from.toString())
-					&& e.getValue().value < getSentOf(causal_sent, e.getKey(), to.toString()).value) {
-				// on doit att un autre receive
-				return;
+			Iterator<CausalWaiting> it = causalsWainting.iterator();
+			while (it.hasNext()) {
+				CausalWaiting cw = it.next();
+				if (tryDeliver(cw.causal, cw.from, cw.to)) {
+					it.remove();
+					causalsWaintingUpdated = true;
+					break;
+				}
 			}
 		}
+	}
 
-		// delivery causal
+	private boolean tryDeliver(Causal causal, String from, String to) {
+		if (!canDeliver(causal, from, to)) {
+			return false;
+		}
 
-		rec.getOrDefault(from, new MutableInteger(0)).value += 1;
+		events.add(Event.newReceived(causal.command));
 
-		for (Map.Entry<String, Map<String, MutableInteger>> e1 : causal_sent.entrySet()) {
+		rec.get(from).value += 1;
+
+		for (Map.Entry<String, Map<String, MutableInteger>> e1 : causal.sent.entrySet()) {
 			for (Map.Entry<String, MutableInteger> e2 : e1.getValue().entrySet()) {
-				MutableInteger i = sentOf(e1.getKey(), e2.getKey());
+				MutableInteger i = sent.get(e1.getKey(), e2.getKey());
 				i.value = Math.max(i.value, e2.getValue().value);
 			}
 		}
-		// recheck la liste des causal en attente
+
+		return true;
 	}
 
-	private MutableInteger recOf(InetSocketAddress from) {
-		return recOf(from.toString());
-	}
+	private boolean canDeliver(Causal causal, String from, String to) {
+		if (rec.get(from).value + 1 != causal.sent.get(from, to).value) {
+			return false;
+		}
 
-	private MutableInteger recOf(String from) {
-		return rec.getOrDefault(from.toString(), new MutableInteger(0));
-	}
+		for (Map.Entry<String, MutableInteger> e : rec.entrySet()) {
+			if (!e.getKey().equals(from) && e.getValue().value < causal.sent.get(e.getKey(), to).value) {
+				return false;
+			}
+		}
 
-	private MutableInteger sentOf(String from, String to) {
-		return getSentOf(sent, from, to);
-	}
-
-	private MutableInteger getSentOf(Map<String, Map<String, MutableInteger>> sent, String from, String to) {
-		return sent.getOrDefault(from, new HashMap<>()).getOrDefault(to, new MutableInteger(0));
-	}
-
-	private MutableInteger sentOf(InetSocketAddress from, InetSocketAddress to) {
-		return getSentOf(sent, from.toString(), to.toString());
-	}
-
-	private MutableInteger getSentOf(Map<String, Map<String, MutableInteger>> sent, InetSocketAddress from,
-			InetSocketAddress to) {
-		return getSentOf(sent, from.toString(), to.toString());
+		return true;
 	}
 }

@@ -4,6 +4,14 @@ public class Command {
 	public static Command fromString(String str) {
 		Command c;
 
+		c = Causal.fromString(str);
+		if (c != null) {
+			return c;
+		}
+		if (str.startsWith("CAUSAL")) {
+			return null;
+		}
+
 		c = Message.fromString(str);
 		if (c != null) {
 			return c;

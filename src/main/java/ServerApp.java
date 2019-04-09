@@ -3,6 +3,7 @@ import java.net.InetSocketAddress;
 
 import server.FedMasterServer;
 import server.FedSlaveServer;
+import server.P2PServer;
 import server.SimpleFedMasterServer;
 import server.SimpleFedSlaveServer;
 import server.SimpleServer;
@@ -47,6 +48,16 @@ public class ServerApp {
 				int masterPort = Integer.parseInt(args[3]);
 
 				new FedSlaveServer(port, new InetSocketAddress(master, masterPort)).start();
+			} else if (server.equals("P2PServer")) {
+				P2PServer s = new P2PServer(port);
+
+				for (int i = 2; i + 1 < args.length; i += 2) {
+					String peer = args[i];
+					int peerPort = Integer.parseInt(args[i + 1]);
+					s.connect(new InetSocketAddress(peer, peerPort));
+				}
+
+				s.start();
 			} else {
 				System.err.println("usage: ServerApp <server kind> <port>");
 				return;
