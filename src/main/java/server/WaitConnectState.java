@@ -6,7 +6,7 @@ import protocol.commands.Connect;
 
 public class WaitConnectState extends ClientState {
 
-	private WaitConnectState(Client client) {
+	protected WaitConnectState(Client client) {
 		super(client);
 	}
 

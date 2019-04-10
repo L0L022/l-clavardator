@@ -12,7 +12,14 @@ public class Rec {
 	}
 
 	public MutableInteger get(String from) {
-		return rec.getOrDefault(from, new MutableInteger(0));
+		MutableInteger i = rec.get(from);
+
+		if (i == null) {
+			i = new MutableInteger(0);
+			rec.put(from, i);
+		}
+
+		return i;
 	}
 
 	public Set<Map.Entry<String, MutableInteger>> entrySet() {
