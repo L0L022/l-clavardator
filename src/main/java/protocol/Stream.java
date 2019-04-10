@@ -87,7 +87,7 @@ public class Stream {
 		while (readBuffer.hasRemaining()) {
 			readLine.write(readBuffer.get());
 
-			Command command = Command.fromString(readLine.toString());
+			Command command = Command.fromByteArray(readLine.toByteArray());
 			if (command != null) {
 				readLine.reset();
 				events.add(Event.newReceived(command));
@@ -116,7 +116,7 @@ public class Stream {
 			commandWriting = null;
 		} else {
 			Command c = commandsToSend.poll();
-			writeBuffer = ByteBuffer.wrap(c.toString().getBytes());
+			writeBuffer = ByteBuffer.wrap(c.toByteArray());
 			commandWriting = c;
 		}
 	}

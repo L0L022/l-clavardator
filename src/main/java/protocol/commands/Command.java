@@ -1,10 +1,11 @@
 package protocol.commands;
 
-public class Command {
-	public static Command fromString(String str) {
+public abstract class Command {
+	public static Command fromByteArray(byte[] bytes) {
 		Command c;
+		String str = new String(bytes);
 
-		c = Causal.fromString(str);
+		c = Causal.fromByteArray(bytes);
 		if (c != null) {
 			return c;
 		}
@@ -34,5 +35,9 @@ public class Command {
 		}
 
 		return null;
+	}
+
+	public byte[] toByteArray() {
+		return toString().getBytes();
 	}
 }
