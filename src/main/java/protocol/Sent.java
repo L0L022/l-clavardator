@@ -17,7 +17,21 @@ public class Sent {
 	}
 
 	public MutableInteger get(String from, String to) {
-		return sent.getOrDefault(from, new HashMap<>()).getOrDefault(to, new MutableInteger(0));
+		Map<String, MutableInteger> m = sent.get(from);
+
+		if (m == null) {
+			m = new HashMap<>();
+			sent.put(from, m);
+		}
+
+		MutableInteger i = m.get(to);
+
+		if (i == null) {
+			i = new MutableInteger(0);
+			m.put(to, i);
+		}
+
+		return i;
 	}
 
 	public Set<Map.Entry<String, Map<String, MutableInteger>>> entrySet() {
@@ -51,6 +65,15 @@ public class Sent {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
+		}
+	}
+
+	public void print() {
+		for (Map.Entry<String, Map<String, MutableInteger>> e1 : sent.entrySet()) {
+			System.out.println("from: " + e1.getKey());
+			for (Map.Entry<String, MutableInteger> e2 : e1.getValue().entrySet()) {
+				System.out.println("to: " + e2.getKey() + " = " + e2.getValue());
+			}
 		}
 	}
 }

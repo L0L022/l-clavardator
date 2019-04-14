@@ -5,18 +5,16 @@ import protocol.Event;
 import protocol.commands.Command;
 import protocol.commands.ServerConnect;
 
-public class P2PWaitConnectState extends ClientState {
-	private WaitConnectState state;
+public class P2PWaitConnectState extends WaitConnectState {
 	private CausalStream causalStream;
 
-	private P2PWaitConnectState(CausalStream causalStream, WaitConnectState state) {
-		super(state.client);
+	private P2PWaitConnectState(CausalStream causalStream, Client client) {
+		super(client);
 		this.causalStream = causalStream;
-		this.state = state;
 	}
 
 	public static ClientState make(CausalStream causalStream, Client client) {
-		return new P2PWaitConnectState(causalStream, (WaitConnectState) WaitConnectState.make(client));
+		return new P2PWaitConnectState(causalStream, client);
 	}
 
 	@Override
@@ -25,17 +23,17 @@ public class P2PWaitConnectState extends ClientState {
 			return P2PConnectedState.makeServer(causalStream, client);
 		}
 
-		return state.process(event);
+		return super.process(event);
 	}
 
 	@Override
 	public ClientState send(Command command) {
-		return state.send(command);
+		return super.send(command);
 	}
 
 	@Override
 	public boolean canSend() {
-		return state.canSend();
+		return super.canSend();
 	}
 
 	@Override

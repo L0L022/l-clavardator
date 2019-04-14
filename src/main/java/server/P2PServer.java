@@ -61,11 +61,6 @@ public class P2PServer {
 			@Override
 			public void onMessageReceived(String message) {
 				System.out.println("PAS POSSIBLE 1");
-//				for (Client c : clients) {
-//					if (c.canSend()) {
-//						c.send(new Message(client.pseudo + "> " + message));
-//					}
-//				}
 			}
 
 		});
@@ -129,7 +124,7 @@ public class P2PServer {
 
 			while (causalStream.hasEvent()) {
 				Event event = causalStream.pollEvent();
-				System.out.println("causal poll: " + event);
+
 				if (event.isReceived() && event.command instanceof Message) {
 					for (Client c : clients) {
 						if (c.kind == Client.Kind.Client && c.canSend()) {

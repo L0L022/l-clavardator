@@ -4,16 +4,14 @@ import protocol.Event;
 import protocol.commands.Command;
 import protocol.commands.ServerConnect;
 
-public class FedWaitConnectState extends ClientState {
-	private WaitConnectState state;
+public class FedWaitConnectState extends WaitConnectState {
 
-	private FedWaitConnectState(WaitConnectState state) {
-		super(state.client);
-		this.state = state;
+	private FedWaitConnectState(Client client) {
+		super(client);
 	}
 
 	public static ClientState make(Client client) {
-		return new FedWaitConnectState((WaitConnectState) WaitConnectState.make(client));
+		return new FedWaitConnectState(client);
 	}
 
 	@Override
@@ -22,17 +20,17 @@ public class FedWaitConnectState extends ClientState {
 			return ConnectedState.makeServer(client);
 		}
 
-		return state.process(event);
+		return super.process(event);
 	}
 
 	@Override
 	public ClientState send(Command command) {
-		return state.send(command);
+		return super.send(command);
 	}
 
 	@Override
 	public boolean canSend() {
-		return state.canSend();
+		return super.canSend();
 	}
 
 	@Override

@@ -1,6 +1,8 @@
 package server;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 import protocol.CausalStream;
 import protocol.Event;
@@ -29,8 +31,8 @@ public class P2PConnectedState extends ConnectedState {
 
 		if (event.isReceived() && event.command instanceof Causal) {
 			try {
-				String from = client.socketChannel.getRemoteAddress().toString();
-				String to = client.socketChannel.getLocalAddress().toString();
+				String from = inet2String(client.socketChannel.getRemoteAddress());
+				String to = inet2String(client.socketChannel.getLocalAddress());
 				causalStream.receive((Causal) event.command, from, to);
 				System.out.println("received causal: " + event);
 				return this;
@@ -49,8 +51,8 @@ public class P2PConnectedState extends ConnectedState {
 	public ClientState send(Command command) {
 		if (client.kind == Client.Kind.Server) {
 			try {
-				String from = client.socketChannel.getLocalAddress().toString();
-				String to = client.socketChannel.getRemoteAddress().toString();
+				String from = inet2String(client.socketChannel.getLocalAddress());
+				String to = inet2String(client.socketChannel.getRemoteAddress());
 				command = causalStream.send(command, from, to);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -60,6 +62,14 @@ public class P2PConnectedState extends ConnectedState {
 			}
 		}
 		return super.send(command);
+	}
+
+	static private String inet2String(SocketAddress addr) {
+		return inet2String((InetSocketAddress) addr);
+	}
+
+	static private String inet2String(InetSocketAddress addr) {
+		return addr.getAddress().getHostAddress() + ":" + addr.getPort();
 	}
 
 	@Override
